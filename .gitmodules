@@ -1,3 +1,6 @@
 [submodule "CompRoboGettingFamiliar"]
 	path = CompRoboGettingFamiliar
 	url = https://github.com/jamiesarahg/CompRoboGettingFamiliar
+[submodule "getting_familiar"]
+	path = getting_familiar
+	url = https://github.com/jamiesarahg/getting_familiar
