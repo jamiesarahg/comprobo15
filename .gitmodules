@@ -8,3 +8,6 @@
 [submodule "day04_comprobo"]
 	path = day04_comprobo
 	url = https://github.com/jamiesarahg/day04_comprobo
+[submodule "robotlocalization"]
+	path = robotlocalization
+	url = https://github.com/jamiesarahg/robotlocalization.git
