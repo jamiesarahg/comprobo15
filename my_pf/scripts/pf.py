@@ -118,8 +118,20 @@ class ParticleFilter:
         # TODO: fill in the appropriate service call here.  The resultant map should be assigned be passed
         #       into the init method for OccupancyField
 
+        print('before')
+        rospy.wait_for_service('static_map')
+        print('after')
+        try:
+            get_map = rospy.ServiceProxy('static_map', GetMap)
+            response = get_map()
+            print get_map
+            print type(get_map)
+            print response
+        except rospy.ServiceException, e:
+           print "Service call failed: %s"%e
+        print 'uh'
         # for now we have commented out the occupancy field initialization until you can successfully fetch the map
-        #self.occupancy_field = OccupancyField(map)
+        self.occupancy_field = OccupancyField(response)
         self.initialized = True
 
     def update_robot_pose(self):
@@ -220,6 +232,16 @@ class ParticleFilter:
         if xy_theta == None:
             xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
         self.particle_cloud = []
+        #random_sample puts values between 0 and 1. 
+        # boundry is the area that the particles can reach: [-boundary, boundary] in both x and y position
+        center = [0,0]
+        boundary = 4
+        noise_arrays = np.random.random_sample((self.n_particles,3))
+        for i in range(self.n_particles):
+            self.particle_cloud.append(Particle(
+                noise_arrays[i][0]*boundary*2-boundary+center[0],
+                noise_arrays[i][1]*boundary*2-boundary+center[1],
+                noise_arrays[i][2]*2*math.pi))
         # TODO create particles
 
         self.normalize_particles()
@@ -227,8 +249,11 @@ class ParticleFilter:
 
     def normalize_particles(self):
         """ Make sure the particle weights define a valid distribution (i.e. sum to 1.0) """
-        pass
-        # TODO: implement this
+        sumOfWeight = 0
+        for p in self.particle_cloud:
+            sumOfWeight += p.w
+        for p in self.particle_cloud:
+            p.w = p.w/sumOfWeight
 
     def publish_particles(self, msg):
         particles_conv = []
