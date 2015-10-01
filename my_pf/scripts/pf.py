@@ -54,6 +54,14 @@ class Particle(object):
         orientation_tuple = tf.transformations.quaternion_from_euler(0,0,self.theta)
         return Pose(position=Point(x=self.x,y=self.y,z=0), orientation=Quaternion(x=orientation_tuple[0], y=orientation_tuple[1], z=orientation_tuple[2], w=orientation_tuple[3]))
 
+    def twist_angular(self, r):
+        """ a helper function to rotate a particle"""
+        self.theta = self.theta + r
+
+    def twist_linear(self, d):
+        """ a helper function to move a particle """
+        return
+
     # TODO: define additional helper functions if needed
 
 class ParticleFilter:
@@ -115,23 +123,16 @@ class ParticleFilter:
         self.current_odom_xy_theta = []
 
         # request the map from the map server, the map should be of type nav_msgs/OccupancyGrid
-        # TODO: fill in the appropriate service call here.  The resultant map should be assigned be passed
-        #       into the init method for OccupancyField
 
-        print('before')
         rospy.wait_for_service('static_map')
-        print('after')
         try:
             get_map = rospy.ServiceProxy('static_map', GetMap)
             response = get_map()
-            print get_map
-            print type(get_map)
-            print response
         except rospy.ServiceException, e:
            print "Service call failed: %s"%e
-        print 'uh'
         # for now we have commented out the occupancy field initialization until you can successfully fetch the map
-        self.occupancy_field = OccupancyField(response)
+        print type(response.map)
+        self.occupancy_field = OccupancyField(response.map)
         self.initialized = True
 
     def update_robot_pose(self):
@@ -164,6 +165,12 @@ class ParticleFilter:
                      new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
 
             self.current_odom_xy_theta = new_odom_xy_theta
+            theta = self.old_odom_xy_theta[2]
+            phi = math.atan2(delta[1], delta[0])
+            psi = phi - theta
+            r1 = psi
+            distance = math.sqrt(delta[0]**2 + delta[1]**2)
+            r2 = delta[2] - psi
         else:
             self.current_odom_xy_theta = new_odom_xy_theta
             return
