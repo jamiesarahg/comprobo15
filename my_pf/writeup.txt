@@ -1,0 +1,16 @@
+What was the goal of your project?
+
+
+How did you solve the problem? (Note: this doesn't have to be super-detailed, you should try to explain what you did at a high-level so that others in the class could reasonably understand what you did).
+
+
+
+Describe a design decision you had to make when working on your project and what you ultimately did (and why)? These design decisions could be particular choices for how you implemented some part of an algorithm or perhaps a decision regarding which of two external packages to use in your project.
+One of our key design decisions was how to update our estimate of the robot's position as new data was collected. We chose between taking a weighted average of all of the particle estimates or simply choosing the single particle with the highest weight. We ultimately decided to base the outcome on a single particle because we were worried about bifurcations in our estimates. For example, a robot in one corner would see similar readings as a robot in the opposite corner. Consider the case where particles are clustered around two centers in opposite corners and have similar probabilities. With the averaging method, the estimate for the robot's position would be in the center of the room, which is not a very reasonable guess. Therefore, we thought it would be better to choose one cluster in a bifurcation rather than get caught between two. 
+
+
+What if any challenges did you face along the way?
+
+
+What would you do to improve your project if you had more time?
+Did you learn any interesting lessons for future robotic programming projects? These could relate to working on robotics projects in teams, working on more open-ended (and longer term) problems, or any other relevant topic.
