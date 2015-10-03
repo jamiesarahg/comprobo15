@@ -194,8 +194,14 @@ class ParticleFilter:
 
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
-        # TODO: implement this
-        pass
+        distance = msg.scan.ranges[0]
+        for p in self.particle_cloud:
+            x2 = distance * math.acos(p.theta) + p.x
+            y2 = distance * math.asin(p.theta) + p.y
+            OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2, y2)
+            sigma = 2 #tune this to adjust noisiness, this number was chosen randomly
+            weight = math.exp((-OccField_distance**2)/(2*sigma**2))
+            p.w = weight
 
     @staticmethod
     def weighted_values(values, probabilities, size):
