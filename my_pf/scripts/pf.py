@@ -95,7 +95,7 @@ class ParticleFilter:
         self.odom_frame = "odom"        # the name of the odometry coordinate frame
         self.scan_topic = "scan"        # the topic where we will get laser scans from 
 
-        self.n_particles = 300          # the number of particles to use
+        self.n_particles = 5          # the number of particles to use
 
         self.d_thresh = 0.2             # the amount of linear movement before performing an update
         self.a_thresh = math.pi/6       # the amount of angular movement before performing an update
@@ -165,16 +165,23 @@ class ParticleFilter:
                      new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
 
             self.current_odom_xy_theta = new_odom_xy_theta
-            theta = self.old_odom_xy_theta[2]
+            theta = old_odom_xy_theta[2]
             phi = math.atan2(delta[1], delta[0])
             psi = phi - theta
-            r1 = psi
             distance = math.sqrt(delta[0]**2 + delta[1]**2)
-            r2 = delta[2] - psi
         else:
             self.current_odom_xy_theta = new_odom_xy_theta
             return
 
+        temporary_particle_cloud = []
+        for p in self.particle_cloud:
+            direction_of_movement = p.theta + psi
+            new_x = p.x + distance*math.cos(direction_of_movement)
+            new_y = p.y + distance*math.sin(direction_of_movement)
+            new_theta = p.theta + delta[2]
+            temporary_particle_cloud.append(Particle(new_x, new_y, new_theta))
+        self.particle_cloud = temporary_particle_cloud
+       
         # TODO: modify particles using delta
         # For added difficulty: Implement sample_motion_odometry (Prob Rob p 136)
 
