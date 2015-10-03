@@ -190,7 +190,10 @@ class ParticleFilter:
         """
         # make sure the distribution is normalized
         self.normalize_particles()
-        # TODO: fill out the rest of the implementation
+        # TODO: fill out the rest of the implementation 
+        choices = self.particle_cloud
+        probabilities = [p.w for p in self.particle_cloud]
+        self.particle_cloud = self.draw_random_sample(choices, probabilities, self.n_particles)
 
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
@@ -268,8 +271,13 @@ class ParticleFilter:
         sumOfWeight = 0
         for p in self.particle_cloud:
             sumOfWeight += p.w
+        
+        new_particle_cloud = []
         for p in self.particle_cloud:
-            p.w = p.w/sumOfWeight
+            new_p = p
+            new_p.w = p.w/sumOfWeight
+            new_particle_cloud.append(new_p)
+        self.particle_cloud = new_particle_cloud
 
     def publish_particles(self, msg):
         particles_conv = []
