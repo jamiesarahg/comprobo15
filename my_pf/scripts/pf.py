@@ -136,9 +136,18 @@ class ParticleFilter:
         # first make sure that the particle weights are normalized
         self.normalize_particles()
 
-        # TODO: assign the lastest pose into self.robot_pose as a geometry_msgs.Pose object
+        # TODO: assign the lastest pose into self.robot_pose as a geometry_msgs.Pose object -> done
         # just to get started we will fix the robot's pose to always be at the origin
-        self.robot_pose = Pose()
+        top_particle = False
+        highest_weight = 0
+        for p in self.particle_cloud:
+            if p.w > highest_weight:
+                top_particle = p
+                highest_weight = p.w
+        if top_particle:
+            self.robot_pose = top_particle
+        else:
+            self.robot_pose = Pose()
 
     def update_particles_with_odom(self, msg):
         """ Update the particles using the newly given odometry pose.
