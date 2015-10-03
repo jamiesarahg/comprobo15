@@ -87,7 +87,7 @@ class ParticleFilter:
         self.odom_frame = "odom"        # the name of the odometry coordinate frame
         self.scan_topic = "scan"        # the topic where we will get laser scans from 
 
-        self.n_particles = 5          # the number of particles to use
+        self.n_particles = 300         # the number of particles to use
 
         self.d_thresh = 0.2             # the amount of linear movement before performing an update
         self.a_thresh = math.pi/6       # the amount of angular movement before performing an update
@@ -145,7 +145,7 @@ class ParticleFilter:
                 top_particle = p
                 highest_weight = p.w
         if top_particle:
-            self.robot_pose = top_particle
+            self.robot_pose = top_particle.as_pose()
         else:
             self.robot_pose = Pose()
 
@@ -206,12 +206,12 @@ class ParticleFilter:
 
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
-        distance = msg.scan.ranges[0]
+        distance = msg.ranges[0]
         new_particle_cloud = []
         for p in self.particle_cloud:
             new_p = p
-            x2 = distance * math.acos(p.theta) + p.x
-            y2 = distance * math.asin(p.theta) + p.y
+            x2 = distance * math.cos(p.theta) + p.x
+            y2 = distance * math.sin(p.theta) + p.y
             OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2, y2)
             sigma = 2 #tune this to adjust noisiness, this number was chosen randomly
             weight = math.exp((-OccField_distance**2)/(2*sigma**2))
