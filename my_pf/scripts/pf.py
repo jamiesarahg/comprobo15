@@ -54,14 +54,6 @@ class Particle(object):
         orientation_tuple = tf.transformations.quaternion_from_euler(0,0,self.theta)
         return Pose(position=Point(x=self.x,y=self.y,z=0), orientation=Quaternion(x=orientation_tuple[0], y=orientation_tuple[1], z=orientation_tuple[2], w=orientation_tuple[3]))
 
-    def twist_angular(self, r):
-        """ a helper function to rotate a particle"""
-        self.theta = self.theta + r
-
-    def twist_linear(self, d):
-        """ a helper function to move a particle """
-        return
-
     # TODO: define additional helper functions if needed
 
 class ParticleFilter:
@@ -176,13 +168,13 @@ class ParticleFilter:
         temporary_particle_cloud = []
         for p in self.particle_cloud:
             direction_of_movement = p.theta + psi
-            new_x = p.x + distance*math.cos(direction_of_movement)
-            new_y = p.y + distance*math.sin(direction_of_movement)
-            new_theta = p.theta + delta[2]
+            new_x = p.x + distance*math.cos(direction_of_movement) + np.random.randn() * .01 
+            new_y = p.y + distance*math.sin(direction_of_movement) + np.random.randn() * .01 
+            new_theta = p.theta + delta[2] + np.random.randn() * .01 
             temporary_particle_cloud.append(Particle(new_x, new_y, new_theta))
         self.particle_cloud = temporary_particle_cloud
-       
-        # TODO: modify particles using delta
+
+        # TODO: modify particles using delta -> done
         # For added difficulty: Implement sample_motion_odometry (Prob Rob p 136)
 
     def map_calc_range(self,x,y,theta):
@@ -256,7 +248,7 @@ class ParticleFilter:
                 noise_arrays[i][0]*boundary*2-boundary+center[0],
                 noise_arrays[i][1]*boundary*2-boundary+center[1],
                 noise_arrays[i][2]*2*math.pi))
-        # TODO create particles
+        # TODO create particles -> done
 
         self.normalize_particles()
         self.update_robot_pose()
