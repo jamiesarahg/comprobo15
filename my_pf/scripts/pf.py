@@ -218,19 +218,23 @@ class ParticleFilter:
         weights = []
         new_particle_cloud = []
 
-        for p in self.particle_cloud:
+        for p in self.particle_cloud: 
              weight = 0
-             for i in range(len(msg.ranges)):
-                distance = msg.ranges[i]
-                new_p = publish
-                x2 = distance * math.cos(p.theta + (i*math.pi)/180) + p.x
+             for i in range(len(msg.ranges)): #from 1 to 361 degrees
+                distance = msg.ranges[i] #laser reading 
+                new_p = p
+                #calculate x,y coordinates of nearest obstacle laser sees
+                x2 = distance * math.cos(p.theta + (i*math.pi)/180) + p.x 
                 y2 = distance * math.cos(p.theta + (i*math.pi)/180) + p.y
+
+                #find error between these coordinates and nearest obstacle on the map
                 OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2,y2)
-                sigma = 1.5
-                weight += math.exp((-OccField_distance**2)/(2*sigma**2))
+                sigma = 1.5 #distance in meters of 1 standard deviation
+                weight += math.exp((-OccField_distance**2)/(2*sigma**2)) #get a weighted error
             new_p.w = weight/len(msg.ranges)
             new_particle_cloud.append(new_p)
-        self.particle_cloud = new_particle_cloud
+        self.particle_cloud = new_particle_cloud #update particle cloud all at once 
+        #note: updating one particle at a time produces too much lag
 
     @staticmethod
     def weighted_values(values, probabilities, size):
