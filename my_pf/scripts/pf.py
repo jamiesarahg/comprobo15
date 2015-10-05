@@ -305,7 +305,8 @@ class ParticleFilter:
             new_p = p
             new_p.w = p.w/sumOfWeight
             new_particle_cloud.append(new_p)
-        self.particle_cloud = new_particle_cloud
+        self.particle_cloud = new_particle_cloud #update particle cloud all at once
+        #note: updating one particle at a time produces too much lag
 
     def publish_particles(self, msg):
         particles_conv = []
