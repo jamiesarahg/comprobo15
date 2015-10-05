@@ -217,7 +217,7 @@ class ParticleFilter:
             x2 = distance * math.cos(p.theta) + p.x
             y2 = distance * math.sin(p.theta) + p.y
             OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2, y2)
-            sigma = 1.5 #tune this to adjust noisiness, this number was chosen randomly
+            sigma = .5 #tune this to adjust noisiness, this number was chosen randomly
             weight = math.exp((-OccField_distance**2)/(2*sigma**2))
             new_p.w = weight
             new_particle_cloud.append(new_p)
