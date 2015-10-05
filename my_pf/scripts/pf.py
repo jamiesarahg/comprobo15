@@ -177,9 +177,10 @@ class ParticleFilter:
         temporary_particle_cloud = []
         for p in self.particle_cloud:
             direction_of_movement = p.theta + psi
-            new_x = p.x + distance*math.cos(direction_of_movement) + np.random.randn() * .01 
-            new_y = p.y + distance*math.sin(direction_of_movement) + np.random.randn() * .01 
-            new_theta = p.theta + delta[2] + np.random.randn() * .01 
+            new_x = p.x + distance*math.cos(direction_of_movement) + (np.random.randn() * .01) 
+            new_y = p.y + distance*math.sin(direction_of_movement) + (np.random.randn() * .01) 
+            new_theta = p.theta + delta[2] + (np.random.randn() * .01) 
+            print np.random.randn() * .01
             temporary_particle_cloud.append(Particle(new_x, new_y, new_theta))
         self.particle_cloud = temporary_particle_cloud
 
@@ -206,22 +207,20 @@ class ParticleFilter:
 
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
-        
-
+        distance = msg.ranges[0]
+        weights = []
         new_particle_cloud = []
+        for i in range(360):
+            distance = msg.ranges[0]
         for p in self.particle_cloud:
-            weight = 0
-            for i in range(len(msg.ranges)):
-                distance = msg.ranges[i]
-                new_p = p
-                x2 = distance * math.cos(p.theta + (i*math.pi)/180) + p.x
-                y2 = distance * math.sin(p.theta + (i*math.pi)/180) + p.y
-                OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2, y2)
-                sigma = 2 #tune this to adjust noisiness, this number was chosen randomly
-                weight += math.exp((-OccField_distance**2)/(2*sigma**2))
-            new_p.w = weight/len(msg.ranges)
+            new_p = p
+            x2 = distance * math.cos(p.theta) + p.x
+            y2 = distance * math.sin(p.theta) + p.y
+            OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2, y2)
+            sigma = 1.5 #tune this to adjust noisiness, this number was chosen randomly
+            weight = math.exp((-OccField_distance**2)/(2*sigma**2))
+            new_p.w = weight
             new_particle_cloud.append(new_p)
-
         self.particle_cloud = new_particle_cloud
 
     @staticmethod
@@ -267,14 +266,14 @@ class ParticleFilter:
         self.particle_cloud = []
         #random_sample puts values between 0 and 1. 
         # boundry is the area that the particles can reach: [-boundary, boundary] in both x and y position
-        center = [0,0]
-        boundary = 4
+        center = [xy_theta[0],xy_theta[1]]
+        boundary = .5
         noise_arrays = np.random.random_sample((self.n_particles,3))
         for i in range(self.n_particles):
             self.particle_cloud.append(Particle(
-                noise_arrays[i][0]*boundary*2-boundary+center[0],
-                noise_arrays[i][1]*boundary*2-boundary+center[1],
-                noise_arrays[i][2]*2*math.pi))
+                noise_arrays[i][0]*boundary-boundary/2+center[0],
+                noise_arrays[i][1]*boundary-boundary/2+center[1],
+                noise_arrays[i][2]-.5+xy_theta[2]))
         # TODO create particles -> done
 
         self.normalize_particles()
