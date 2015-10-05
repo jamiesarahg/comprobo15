@@ -136,8 +136,8 @@ class ParticleFilter:
         # first make sure that the particle weights are normalized
         self.normalize_particles()
 
-        # TODO: assign the lastest pose into self.robot_pose as a geometry_msgs.Pose object -> done
-        # just to get started we will fix the robot's pose to always be at the origin
+        #iterates through all of the particles in the particle cloud in order to find the particle with the highest weight
+        #particle with the highest weight is then assigned to top_particle
         top_particle = False
         highest_weight = 0
         for p in self.particle_cloud:
@@ -145,8 +145,10 @@ class ParticleFilter:
                 top_particle = p
                 highest_weight = p.w
         if top_particle:
+            # if there is particles in the cloud, assign the robot pose to the location of the particle with the highest weight
             self.robot_pose = top_particle.as_pose()
         else:
+            # if there is no particles in the cloud, assign the robot pose to the origin.
             self.robot_pose = Pose()
 
     def update_particles_with_odom(self, msg):
@@ -158,33 +160,36 @@ class ParticleFilter:
             msg: this is not really needed to implement this, but is here just in case.
         """
         new_odom_xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
-        # compute the change in x,y,theta since our last update
         if self.current_odom_xy_theta:
             old_odom_xy_theta = self.current_odom_xy_theta
+            # compute the change in x,y,theta since our last update
             delta = (new_odom_xy_theta[0] - self.current_odom_xy_theta[0],
                      new_odom_xy_theta[1] - self.current_odom_xy_theta[1],
                      new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
 
+            #use the diagram given by Paul in the project assignment to compare the angles here with what we are calculating
             self.current_odom_xy_theta = new_odom_xy_theta
             theta = old_odom_xy_theta[2]
             phi = math.atan2(delta[1], delta[0])
             psi = phi - theta
+            #distance is the difference in the x, y cordinates from the previous position of the particle to the current
             distance = math.sqrt(delta[0]**2 + delta[1]**2)
         else:
             self.current_odom_xy_theta = new_odom_xy_theta
             return
 
+        #calculating the change in the x and y position of the particle.
         temporary_particle_cloud = []
         for p in self.particle_cloud:
+            #direction of movement is the current angle plus the difference in the old angle with the new position
             direction_of_movement = p.theta + psi
             new_x = p.x + distance*math.cos(direction_of_movement) + (np.random.randn() * .01) 
             new_y = p.y + distance*math.sin(direction_of_movement) + (np.random.randn() * .01) 
             new_theta = p.theta + delta[2] + (np.random.randn() * .01) 
-            print np.random.randn() * .01
             temporary_particle_cloud.append(Particle(new_x, new_y, new_theta))
+        # reassigns the new particle cloud at one point as to not confuse the filter
         self.particle_cloud = temporary_particle_cloud
 
-        # TODO: modify particles using delta -> done
         # For added difficulty: Implement sample_motion_odometry (Prob Rob p 136)
 
     def map_calc_range(self,x,y,theta):
@@ -200,9 +205,11 @@ class ParticleFilter:
         """
         # make sure the distribution is normalized
         self.normalize_particles()
-        # TODO: fill out the rest of the implementation 
+
         choices = self.particle_cloud
+        # probabilities is the weights for the particles in the particle cloud
         probabilities = [p.w for p in self.particle_cloud]
+        # reassigns the new particle cloud
         self.particle_cloud = self.draw_random_sample(choices, probabilities, self.n_particles)
 
     def update_particles_with_laser(self, msg):
@@ -210,16 +217,18 @@ class ParticleFilter:
         distance = msg.ranges[0]
         weights = []
         new_particle_cloud = []
-        for i in range(360):
-            distance = msg.ranges[0]
+
         for p in self.particle_cloud:
-            new_p = p
-            x2 = distance * math.cos(p.theta) + p.x
-            y2 = distance * math.sin(p.theta) + p.y
-            OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2, y2)
-            sigma = .5 #tune this to adjust noisiness, this number was chosen randomly
-            weight = math.exp((-OccField_distance**2)/(2*sigma**2))
-            new_p.w = weight
+             weight = 0
+             for i in range(len(msg.ranges)):
+                distance = msg.ranges[i]
+                new_p = publish
+                x2 = distance * math.cos(p.theta + (i*math.pi)/180) + p.x
+                y2 = distance * math.cos(p.theta + (i*math.pi)/180) + p.y
+                OccField_distance = self.occupancy_field.get_closest_obstacle_distance(x2,y2)
+                sigma = 1.5
+                weight += math.exp((-OccField_distance**2)/(2*sigma**2))
+            new_p.w = weight/len(msg.ranges)
             new_particle_cloud.append(new_p)
         self.particle_cloud = new_particle_cloud
 
@@ -263,18 +272,20 @@ class ParticleFilter:
                       particle cloud around.  If this input is ommitted, the odometry will be used """
         if xy_theta == None:
             xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
-        self.particle_cloud = []
-        #random_sample puts values between 0 and 1. 
-        # boundry is the area that the particles can reach: [-boundary, boundary] in both x and y position
+        #center is the x,y coordinate that the particle cloud is centered around. 
         center = [xy_theta[0],xy_theta[1]]
+        # boundry is the area that the particles are placed in [-boundary/2, boundary/2] in both x and y direction
         boundary = .5
+        #noise_arrays is an array of three arrays each with self.n_particles length. The arrays are filled with random numbers
+        #from 0-1. Will be used for adding noise to the particle cloud
         noise_arrays = np.random.random_sample((self.n_particles,3))
+
+        self.particle_cloud = []
         for i in range(self.n_particles):
             self.particle_cloud.append(Particle(
                 noise_arrays[i][0]*boundary-boundary/2+center[0],
                 noise_arrays[i][1]*boundary-boundary/2+center[1],
                 noise_arrays[i][2]-.5+xy_theta[2]))
-        # TODO create particles -> done
 
         self.normalize_particles()
         self.update_robot_pose()
